@@ -35,7 +35,7 @@ def generate_words_count(tweets):
 	for tweet in tweets:
 		t = re.sub(r"http\S+", "", tweet[0].rstrip(), flags=re.UNICODE)
 		mentions = re.findall(r'\S*@\S*', t)
-		t = re.sub(r'\S*@\S*', '', w, re.UNICODE)
+		t = re.sub(r'\S*@\S*', '', t, re.UNICODE)
 		hashtags = re.findall(r'(?:^|\s)[＃#]{1}(\w+)', t)
 		hashtags = ["#" + elem for elem in hashtags]
 		t = re.sub(r'(?:^|\s)[＃#]{1}(\w+)', '', t, re.UNICODE)

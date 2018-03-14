@@ -131,6 +131,7 @@ def generate_tweets_per_accounts_csv(api, accounts, total, output_csv_file):
     tweets = [header]
 
     for account in accounts:
+        print ("Processing this account: " + account + "...")
         for tweet in tweepy.Cursor(api.user_timeline, id=account).items(total):
             row = []
             row.append(tweet.text.replace('\n', ' '))
@@ -165,6 +166,5 @@ if __name__ == "__main__":
 
     print ("Generating the words csv...")
     header = ["id", "value"]
-    words_count = [header] + words_count
-    generate_csv_file("../words.csv", filter_words(words_count))
+    generate_csv_file("../words.csv", [header] + filter_words(words_count))
     print ("Done!")
