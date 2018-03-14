@@ -49,7 +49,7 @@ def generate_words_count(tweets):
 		words = remove_stopwords(words)
 		words = mentions + hashtags + words
 		for w in words:
-			w = w.lower() if not "@" in w else w
+			w = w.lower() if not "@" in w or not "#" in w else w
 
 			if w == "rt" or w == "" or len(w) <= 1:
 				continue
