@@ -1,64 +1,117 @@
 <!DOCTYPE html>
-<svg width="960" height="960" font-family="sans-serif" font-size="10" text-anchor="middle"></svg>
+<head>
+  <meta charset="UTF-8">
+  <style>
+  div.tooltip { 
+    position: absolute;
+    display: block;
+    z-index: 10000;
+    border: 2px solid black;
+    background-color: rgba(0,0,0,0.8);
+    margin: auto;
+    padding: 3px 5px 3px 5px;
+    color: white;
+    font-size: 12px;
+    font-family: arial;
+    border-radius: 5px;
+    vertical-align: middle;
+    text-align: center;
+    min-width: 50px;
+    overflow: auto; 
+  }
+  </style>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+  <div class="card text-center"">
+    <div class="card-header">
+      Gráficos de Twitter
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">Bubble Chart de personas que mencionan a @Miguel_pizarro</h5>
+    </div>
+  </div>
+</boddy>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
+  var width = 600,
+      height = 600;
 
-var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height");
+  var div = d3.select(".card-body").append("div") 
+      .attr("class", "tooltip")
+      .attr("pointer-events", "none") 
+      .style("opacity", 0);
 
-var format = d3.format(",d");
+  var svg =  d3.select(".card-body")
+      .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("font-family", "sans-serif")
+        .attr("font-size", 10)
+        .attr("text-anchor", "middle");
 
-var color = d3.scaleOrdinal(d3.schemeCategory20c);
 
-var pack = d3.pack()
-    .size([width, height])
-    .padding(1.5);
+  var format = d3.format(",d");
 
-d3.csv("words.csv", function(d) {
-  d.value = +d.value;
-  if (d.value) return d;
-}, function(error, classes) {
-  if (error) throw error;
+  var color = d3.scaleOrdinal(d3.schemeCategory20c);
 
-  var root = d3.hierarchy({children: classes})
-      .sum(function(d) { return d.value; })
-      .each(function(d) {
-        if (id = d.data.id) {
-          var id, i = id.lastIndexOf(".");
-          d.id = id;
-          d.package = id.slice(0, i);
-          d.class = id.slice(i + 1);
-        }
-      });
+  var pack = d3.pack()
+      .size([width, height])
+      .padding(1.5);
 
-  var node = svg.selectAll(".node")
-    .data(pack(root).leaves())
-    .enter().append("g")
-      .attr("class", "node")
-      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  d3.csv("words.csv", function(d) {
+    d.value = +d.value;
+    if (d.value) return d;
+  }, function(error, classes) {
+    if (error) throw error;
 
-  node.append("circle")
-      .attr("id", function(d) { return d.id; })
-      .attr("r", function(d) { return d.r; })
-      .style("fill", function(d) { return color(d.package); });
+    var root = d3.hierarchy({children: classes})
+        .sum(function(d) { return d.value; })
+        .each(function(d) {
+          d.id = d.data.word;
+        });
 
-  node.append("clipPath")
-      .attr("id", function(d) { return "clip-" + d.id; })
-    .append("use")
-      .attr("xlink:href", function(d) { return "#" + d.id; });
+    var node = svg.selectAll(".node")
+      .data(pack(root).leaves())
+      .enter().append("g")
+        .attr("class", "node")
+        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
-  node.append("text")
-      .attr("clip-path", function(d) { return "url(#clip-" + d.id + ")"; })
-    .selectAll("tspan")
-    .data(function(d) { return d.class.split(/(?=[A-Z][^A-Z])/g); })
-    .enter().append("tspan")
-      .attr("x", 0)
-      .attr("y", function(d, i, nodes) { return 13 + (i - nodes.length / 2 - 0.5) * 10; })
-      .text(function(d) { return d; });
+    node.append("circle")
+        .attr("id", function(d) { return d.id; })
+        .attr("r", function(d) { return d.r; })
+        .style("fill", function(d) { return color(d.value); })
+        .on("mouseover", function(d) {
+            d3.select(this).style("fill", "gold"); 
+            div.transition()    
+                .duration(200)    
+                .style("opacity", .9);    
+            div .html("Palabra: " + d.id + "<br/>Frecuencia: "  + d.value)  
+                .style("left", (d3.event.pageX) + "px")   
+                .style("top", (d3.event.pageY - 28) + "px");  
+        })
+        .on("mousemove", function(d,i) {
+            div .html("Palabra: " + d.id + "<br/>Frecuencia: "  + d.value)  
+                .style("left", (d3.event.pageX) + "px")   
+                .style("top", (d3.event.pageY - 60) + "px"); 
+        })         
+        .on("mouseout", function(d) {
+            d3.select(this).style("fill", function(d) { return color(d.value); }); 
+            div.transition()    
+                .duration(500)    
+                .style("opacity", 0); 
+        });
 
-  node.append("title")
-      .text(function(d) { return d.id + "\n" + format(d.value); });
-});
+    node.append("text")
+        .attr("dy", ".3em")
+        .style("text-anchor", "middle")
+        .style("font-family", "arial")
+        .attr("pointer-events", "none")
+        .style("fill","black")
+          .text(function(d) { return d.id; });
 
+  });
 </script>

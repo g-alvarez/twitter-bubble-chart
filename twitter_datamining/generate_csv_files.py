@@ -7,6 +7,7 @@ import tweepy
 import csv
 import twitter_credentials as twitter_cred
 from tweets_preprocessing import generate_words_count
+import statistics
 
 NUMBER_OF_ARGUMENTS = 5
 
@@ -96,7 +97,7 @@ def generate_tweets_search_csv(api, keyword, output_csv_file):
         row = []
         row.append(tweet.created_at.strftime('%m/%d/%Y'))
         row.append(tweet.id)
-        row.append(tweet.text.replace('\n', ' '))
+        row.append(tweet.text)
         row.append(tweet.source)
         row.append(tweet.in_reply_to_status_id)
         row.append(tweet.user.name)
@@ -104,7 +105,7 @@ def generate_tweets_search_csv(api, keyword, output_csv_file):
         if not tweet.user.screen_name in accounts:
             accounts.append(tweet.user.screen_name)
         row.append(tweet.user.followers_count)
-        row.append(True if hasattr(tweet, 'retweeten_status') else False)
+        row.append(True if hasattr(tweet, 'retweeted_status') else False)
         tweets.append(row)
 
     generate_csv_file(output_csv_file, tweets)
@@ -143,8 +144,8 @@ def generate_tweets_per_accounts_csv(api, accounts, total, output_csv_file):
     print ("Done!")
     return tweets
 
-def filter_words(words_count):
-    """ Filter the words_count list by removing all words that occur less than 10 times.
+def filter_words(words_count, keyword=""):
+    """ Filter the words_count list by getting the first n elements.
 
     Args:
         words_count: The words_count list.
@@ -153,7 +154,10 @@ def filter_words(words_count):
         The filtered list of words_count.
 
     """
-    return [elem for elem in words_count if int(elem[1]) >= 10]
+    words_count = [word for word in words_count if word[1] > 1 and word != keyword]
+    mean = statistics.mean([word[1] for word in words_count])
+    std = statistics.stdev([word[1] for word in words_count])
+    return [word for word in words_count if word[1] >= mean + std]
 
 if __name__ == "__main__":
 
@@ -165,6 +169,6 @@ if __name__ == "__main__":
     words_count = generate_words_count(tweets)
 
     print ("Generating the words csv...")
-    header = ["id", "value"]
-    generate_csv_file("../words.csv", [header] + filter_words(words_count))
+    header = ["word", "value"]
+    generate_csv_file("../words.csv", [header] + filter_words(words_count, keyword=word))
     print ("Done!")
