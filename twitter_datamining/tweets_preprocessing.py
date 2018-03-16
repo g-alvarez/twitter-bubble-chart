@@ -7,6 +7,7 @@ except:
 	nltk.download("stopwords")
 	from nltk.corpus import stopwords
 import nltk
+from nltk.util import ngrams
 import re
 
 def remove_stopwords(words):
@@ -21,7 +22,7 @@ def remove_stopwords(words):
 	"""
 	return [word for word in words if word.lower() not in stopwords.words('spanish')]
 
-def generate_words_count(tweets):
+def get_words_count(tweets, text_column=0):
 	""" Generate the list of words with their respective count from a tweet.
 
 	Args:
@@ -33,7 +34,7 @@ def generate_words_count(tweets):
 	"""
 	words_count = {}
 	for tweet in tweets:
-		t = re.sub(r"http\S+", "", tweet[0].rstrip(), flags=re.UNICODE)
+		t = re.sub(r"http\S+", "", tweet[text_column].rstrip(), flags=re.UNICODE)
 		mentions = re.findall(r'\S*@\S*', t)
 		t = re.sub(r'\S*@\S*', '', t, re.UNICODE)
 		hashtags = re.findall(r'(?:^|\s)[＃#]{1}(\w+)', t)
@@ -63,7 +64,21 @@ def generate_words_count(tweets):
 				words_count.update({w: 1})
 
 	words_count = [[word, count] for word, count in words_count.items()]
-	return sorted(words_count, key=lambda x: x[1], reverse=True) 
+	return sorted(words_count, key=lambda x: x[1], reverse=True)
+
+# def get_bigrams_trigrams(tweets, text_column=0):
+# 	""" Generate the list of words with their respective count from a tweet.
+
+# 	Args:
+# 		tweets: The list of tweets.
+
+# 	Returns:
+# 		The list of words with their respective count.
+
+# 	"""
+# 	words_count = {}
+# 	for tweet in tweets:
+# 		t = re.sub(r"http\S+", "", tweet[text_column].rstrip(), flags=re.UNICODE)
 
 if __name__ == "__main__":
 
@@ -78,4 +93,4 @@ if __name__ == "__main__":
 		["Jajajajaja RT @DTVTotal: RT @TurcoHusain: Nobleza obliga hoy daré la cara en @DTVTotal y aguantare todo los golpes.… https://t.co/yCbRmZOQyV", 247]
 	]
 
-	print (generate_words_count(tweets))
+	print (get_words_count(tweets))

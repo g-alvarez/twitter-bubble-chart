@@ -102,3 +102,6 @@ ENV/
 
 # CSV extensions
 *.csv
+
+# CSV
+csv/

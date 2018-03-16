@@ -6,7 +6,7 @@ from tweepy import OAuthHandler
 import tweepy
 import csv
 import twitter_credentials as twitter_cred
-from tweets_preprocessing import generate_words_count
+from tweets_preprocessing import get_words_count
 import statistics
 
 NUMBER_OF_ARGUMENTS = 5
@@ -20,7 +20,7 @@ def handle_arguments():
     """
     if "-W" not in sys.argv or "-n" not in sys.argv or len(sys.argv) < NUMBER_OF_ARGUMENTS:
         print ("Missing arguments!")
-        print ('Hint: "python generate_tweets_csv.py -W <account> -n <number>"')
+        print ('Hint: "python generate_csv_files.py -W <account> -n <number>"')
         sys.exit(0)
 
     w_arg = ""
@@ -73,7 +73,7 @@ def generate_csv_file(filename, data):
         for row in data:
             spamwriter.writerow(row)
 
-def generate_tweets_search_csv(api, keyword, output_csv_file):
+def generate_tweets_search_api_csv(api, keyword, output_csv_file):
     """ Generate the csv file with all the tweets found using the search API.
 
     Args:
@@ -85,7 +85,7 @@ def generate_tweets_search_csv(api, keyword, output_csv_file):
         The list of accounts found in the search API.
 
     """
-    print ("Generating the search api csv...")
+    print ("Generating the tweets found in the search api csv...")
 
     header = ['Created At', 'Tweet Id', 'Text', 'Source', 'In Reply to', 'Username', 
               'Screen Name', 'Followers Count', 'Is Retweet']
@@ -111,7 +111,7 @@ def generate_tweets_search_csv(api, keyword, output_csv_file):
     generate_csv_file(output_csv_file, tweets)
 
     print ("Done!")
-    return accounts
+    return (accounts, tweets)
 
 def generate_tweets_per_accounts_csv(api, accounts, total, output_csv_file):
     """ Generate the csv file with n tweets per account.
@@ -128,15 +128,23 @@ def generate_tweets_per_accounts_csv(api, accounts, total, output_csv_file):
     """
     print ("Generating the tweets per account csv...")
 
-    header = ['Text', 'Followers Count']
+    header = ['Created At', 'Tweet Id', 'Text', 'Source', 'In Reply to', 'Username', 
+              'Screen Name', 'Followers Count', 'Is Retweet']
     tweets = [header]
 
     for account in accounts:
         print ("Processing this account: " + account + "...")
         for tweet in tweepy.Cursor(api.user_timeline, id=account).items(total):
             row = []
-            row.append(tweet.text.replace('\n', ' '))
+            row.append(tweet.created_at.strftime('%m/%d/%Y'))
+            row.append(tweet.id)
+            row.append(tweet.text)
+            row.append(tweet.source)
+            row.append(tweet.in_reply_to_status_id)
+            row.append(tweet.user.name)
+            row.append(tweet.user.screen_name)
             row.append(tweet.user.followers_count)
+            row.append(True if hasattr(tweet, 'retweeted_status') else False)
             tweets.append(row)
 
     generate_csv_file(output_csv_file, tweets)
@@ -154,21 +162,47 @@ def filter_words(words_count, keyword=""):
         The filtered list of words_count.
 
     """
-    words_count = [word for word in words_count if word[1] > 1 and word != keyword]
-    mean = statistics.mean([word[1] for word in words_count])
-    std = statistics.stdev([word[1] for word in words_count])
-    return [word for word in words_count if word[1] >= mean + std]
+    words_count_filtered = [word for word in words_count if word[1] > 1 and word[0] != keyword]
+    mean = statistics.mean([word[1] for word in words_count_filtered])
+    std = statistics.stdev([word[1] for word in words_count_filtered])
+    return [word for word in words_count_filtered if word[1] >= mean + std]
+
+def filter_hashtags(words_count):
+    """ Filter the words_count list by getting only the hashtags.
+
+    Args:
+        words_count: The words_count list.
+
+    Returns:
+        The filtered list of words_count.
+
+    """
+    hashtags = [word for word in words_count if word[0][0] == "#" and word[1] > 1]
+    mean = statistics.mean([word[1] for word in hashtags])
+    std = statistics.stdev([word[1] for word in hashtags])
+    return  [word for word in hashtags if word[1] >= mean + std]
 
 if __name__ == "__main__":
 
     word, total = handle_arguments()
 
     api = get_twitter_api()
-    accounts = generate_tweets_search_csv(api, word, "tweets_search_result.csv")
-    tweets = generate_tweets_per_accounts_csv(api, accounts, total, "tweets.csv")
-    words_count = generate_words_count(tweets)
+    accounts, tweets_search_api = generate_tweets_search_api_csv(api, word, "../csv/tweets_search_api.csv")
+    tweets_per_accounts = generate_tweets_per_accounts_csv(api, accounts, total, "../csv/tweets_per_accounts.csv")
+    words_count_search_api = get_words_count(tweets_search_api, text_column=2)
+    words_count_per_accounts = get_words_count(tweets_per_accounts, text_column=2)
 
-    print ("Generating the words csv...")
+    print ("Generating the words csv from the tweets per accounts...")
     header = ["word", "value"]
-    generate_csv_file("../words.csv", [header] + filter_words(words_count, keyword=word))
+    generate_csv_file("../csv/words_per_accounts.csv", [header] + filter_words(words_count_per_accounts, keyword=word))
+    print ("Done!")
+
+    print ("Generating the words csv from the tweets found in the search api...")
+    header = ["word", "value"]
+    generate_csv_file("../csv/words_search_api.csv", [header] + filter_words(words_count_search_api, keyword=word))
+    print ("Done!")
+
+    print ("Generating the words csv from hashtags found in tweets per accounts...")
+    header = ["word", "value"]
+    generate_csv_file("../csv/words_hashtags_search_api.csv", [header] + filter_hashtags(words_count_per_accounts))
     print ("Done!")

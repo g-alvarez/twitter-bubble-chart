@@ -1,117 +1,40 @@
 <!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
-  <style>
-  div.tooltip { 
-    position: absolute;
-    display: block;
-    z-index: 10000;
-    border: 2px solid black;
-    background-color: rgba(0,0,0,0.8);
-    margin: auto;
-    padding: 3px 5px 3px 5px;
-    color: white;
-    font-size: 12px;
-    font-family: arial;
-    border-radius: 5px;
-    vertical-align: middle;
-    text-align: center;
-    min-width: 50px;
-    overflow: auto; 
-  }
-  </style>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="./css/select2.min.css">
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-  <div class="card text-center"">
-    <div class="card-header">
-      Gráficos de Twitter
-    </div>
-    <div class="card-body">
-      <h5 class="card-title">Bubble Chart de personas que mencionan a @Miguel_pizarro</h5>
-    </div>
+  <div class="card text-center">
+      <h3 class="card-header blue-header">Word Board</h3>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <div id="svg-container">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select style="width: 100%;" class="form-control select2">
+              <option value="0" selected> Por Cuentas </option>
+              <option value="1"> Por Menciones </option>
+              <option value="2"> Por Hashtags </option>
+            </select>
+            <div class="bottom-middle" style="width: 95%;">
+              <div>
+                <h5>Leyenda</h5>
+                <p class="card-text">Se muestra un gráfico de burbujas en donde el tamaño de las mismas viene determinado por la ocurrencia de la palabra. Estas palabras fueron tomadas de los tweets de las cuentas que mencionaron a @Miguel_pizarro en los últimos 7 días, de cada una de estas cuentas se tomaron 10 tweets.</p>
+              </div>
+            </div>
+            <img src="./img/logo-200x375.png" class="bottom-right-corner">
+          </div>
+        </div>
+      </div>
   </div>
-</boddy>
+</body>
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<script>
-  var width = 600,
-      height = 600;
-
-  var div = d3.select(".card-body").append("div") 
-      .attr("class", "tooltip")
-      .attr("pointer-events", "none") 
-      .style("opacity", 0);
-
-  var svg =  d3.select(".card-body")
-      .append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("font-family", "sans-serif")
-        .attr("font-size", 10)
-        .attr("text-anchor", "middle");
-
-
-  var format = d3.format(",d");
-
-  var color = d3.scaleOrdinal(d3.schemeCategory20c);
-
-  var pack = d3.pack()
-      .size([width, height])
-      .padding(1.5);
-
-  d3.csv("words.csv", function(d) {
-    d.value = +d.value;
-    if (d.value) return d;
-  }, function(error, classes) {
-    if (error) throw error;
-
-    var root = d3.hierarchy({children: classes})
-        .sum(function(d) { return d.value; })
-        .each(function(d) {
-          d.id = d.data.word;
-        });
-
-    var node = svg.selectAll(".node")
-      .data(pack(root).leaves())
-      .enter().append("g")
-        .attr("class", "node")
-        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-
-    node.append("circle")
-        .attr("id", function(d) { return d.id; })
-        .attr("r", function(d) { return d.r; })
-        .style("fill", function(d) { return color(d.value); })
-        .on("mouseover", function(d) {
-            d3.select(this).style("fill", "gold"); 
-            div.transition()    
-                .duration(200)    
-                .style("opacity", .9);    
-            div .html("Palabra: " + d.id + "<br/>Frecuencia: "  + d.value)  
-                .style("left", (d3.event.pageX) + "px")   
-                .style("top", (d3.event.pageY - 28) + "px");  
-        })
-        .on("mousemove", function(d,i) {
-            div .html("Palabra: " + d.id + "<br/>Frecuencia: "  + d.value)  
-                .style("left", (d3.event.pageX) + "px")   
-                .style("top", (d3.event.pageY - 60) + "px"); 
-        })         
-        .on("mouseout", function(d) {
-            d3.select(this).style("fill", function(d) { return color(d.value); }); 
-            div.transition()    
-                .duration(500)    
-                .style("opacity", 0); 
-        });
-
-    node.append("text")
-        .attr("dy", ".3em")
-        .style("text-anchor", "middle")
-        .style("font-family", "arial")
-        .attr("pointer-events", "none")
-        .style("fill","black")
-          .text(function(d) { return d.id; });
-
-  });
-</script>
+<script src="./js/select2.full.min.js"></script>
+<script src="./js/index.js"></script>
