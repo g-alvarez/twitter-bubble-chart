@@ -1,40 +1,50 @@
 <!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
+  <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <!-- Select 2 -->
   <link rel="stylesheet" href="./css/select2.min.css">
+  <!-- Page css -->
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
   <div class="card text-center">
       <h3 class="card-header blue-header">Word Board</h3>
       <div class="card-body">
+        <div id="loading">
+        </div>
         <div class="row">
           <div class="col-md-8">
+            <select style="width: 60%;" class="form-control select2">
+              <br>
+              <option value="0" selected> Por Cuentas </option>
+              <option value="1"> Por Menciones </option>
+              <option value="2"> Por Hashtags </option>
+              <option value="3"> Por Palabras Agrupadas </option>
+            </select>
             <div id="svg-container">
             </div>
           </div>
           <div class="col-md-4">
-            <select style="width: 100%;" class="form-control select2">
-              <option value="0" selected> Por Cuentas </option>
-              <option value="1"> Por Menciones </option>
-              <option value="2"> Por Hashtags </option>
-            </select>
-            <div class="bottom-middle" style="width: 95%;">
-              <div>
-                <h5>Leyenda</h5>
-                <p class="card-text">Se muestra un gráfico de burbujas en donde el tamaño de las mismas viene determinado por la ocurrencia de la palabra. Estas palabras fueron tomadas de los tweets de las cuentas que mencionaron a @Miguel_pizarro en los últimos 7 días, de cada una de estas cuentas se tomaron 10 tweets.</p>
-              </div>
+            <div style="width: 95%;">
+              <h5>Leyenda</h5>
+              <p id="info-text">Se muestra un gráfico de burbujas en donde el tamaño de las mismas viene determinado por la ocurrencia de la palabra. Estas palabras fueron tomadas de los tweets de las cuentas que mencionaron a @Miguel_pizarro en los últimos 7 días, de cada una de estas cuentas se tomaron 10 tweets.</p>
             </div>
-            <img src="./img/logo-200x375.png" class="bottom-right-corner">
+            <img src="./img/logo-200x375.png" class="bottom logo-size">
           </div>
         </div>
       </div>
   </div>
 </body>
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<!-- JQuery -->
+<script src="./js/jquery-1.9.1.min.js"></script>
+<!-- Bootstrap -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<!-- D3JS -->
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<!-- Select 2 -->
 <script src="./js/select2.full.min.js"></script>
+<!-- Page script -->
 <script src="./js/index.js"></script>

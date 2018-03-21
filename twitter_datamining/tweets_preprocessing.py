@@ -9,6 +9,7 @@ except:
 import nltk
 from nltk.util import ngrams
 import re
+import string
 
 def remove_stopwords(words):
 	""" Remove all the stop words from the list of words.
@@ -34,17 +35,19 @@ def get_words_count(tweets, text_column=0):
 	"""
 	words_count = {}
 	for tweet in tweets:
-		t = re.sub(r"http\S+", "", tweet[text_column].rstrip(), flags=re.UNICODE)
-		mentions = re.findall(r'\S*@\S*', t)
-		t = re.sub(r'\S*@\S*', '', t, re.UNICODE)
-		hashtags = re.findall(r'(?:^|\s)[＃#]{1}(\w+)', t)
-		hashtags = ["#" + elem for elem in hashtags]
-		t = re.sub(r'(?:^|\s)[＃#]{1}(\w+)', '', t, re.UNICODE)
+		t = re.sub(r"http\S+", "", tweet[text_column].replace("…", ""), flags=re.UNICODE)
+		mentions = re.findall(r'@\S*', t)
+		t = re.sub(r'@\S*', '', t, re.UNICODE)
+		hashtags = re.findall(r'#\S*', t)
+		t = re.sub(r'#\S*', '', t, re.UNICODE)
+		table = str.maketrans({key: None for key in string.punctuation if key != "@" and key != "#"})
+		new_s = t.translate(table)  
 		try:
-			words = nltk.word_tokenize(t)
+			words = nltk.word_tokenize(new_s)
 		except:
-			nltk.download('punkt')
-			words = nltk.word_tokenize(t)
+			nltk.download("punkt")
+			words = nltk.word_tokenize(new_s)
+
 		words = remove_stopwords(words)
 		words = mentions + hashtags + words
 		for w in words:
@@ -66,19 +69,88 @@ def get_words_count(tweets, text_column=0):
 	words_count = [[word, count] for word, count in words_count.items()]
 	return sorted(words_count, key=lambda x: x[1], reverse=True)
 
-# def get_bigrams_trigrams(tweets, text_column=0):
-# 	""" Generate the list of words with their respective count from a tweet.
+def get_ngrams_count(tweets, text_column=0):
+	""" Generate the list of ngrams with their respective count from a tweet.
 
-# 	Args:
-# 		tweets: The list of tweets.
+	Args:
+		tweets: The list of tweets.
 
-# 	Returns:
-# 		The list of words with their respective count.
+	Returns:
+		The list of ngrams with their respective count.
 
-# 	"""
-# 	words_count = {}
-# 	for tweet in tweets:
-# 		t = re.sub(r"http\S+", "", tweet[text_column].rstrip(), flags=re.UNICODE)
+	"""
+	ngrams_count = {}
+	for tweet in tweets:
+		t = re.sub(r"http\S+", "", tweet[text_column].replace("…", ""), flags=re.UNICODE)
+
+		table = str.maketrans({key: None for key in string.punctuation if key != "@" and key != "#"})
+		new_s = t.translate(table)
+		
+		mentions_old = re.findall(r'@\S*', t)
+		hashtags_old = re.findall(r'#\S*', t)
+
+		mentions = re.findall(r'@\S*', new_s)
+		hashtags = re.findall(r'#\S*', new_s)
+
+		for i in list(range(len(mentions))):
+			mention = mentions_old[i]
+			if not mention[-1].isalnum() and mention[-1] != "_":
+				mention = mention[:-1]
+			new_s = new_s.replace(mentions[i], mention)
+		for i in list(range(len(hashtags))):
+			hashtag = hashtags_old[i]
+			if not hashtag[-1].isalnum() and hashtag[-1] != "_":
+				hashtag = hashtag[:-1]
+			new_s = new_s.replace(hashtags[i], hashtag)
+
+		try:
+			words = nltk.word_tokenize(new_s)
+		except:
+			nltk.download("punkt")
+			words = nltk.word_tokenize(new_s)
+
+		i = 0 
+		new_words = []
+		while i < len(words):
+			if words[i].lower() == "rt" or words[i] == "":
+				i += 1
+				continue
+			if words[i] == "#" or words[i] == "@":
+				try:
+					new_words.append(words[i] + words[i+1])
+					i += 2
+				except:
+					new_words.append(words[i])
+			else:
+				new_words.append(words[i].lower())
+			i += 1
+			
+		bigrams = ngrams(remove_stopwords(new_words), 2)
+		trigrams = ngrams(remove_stopwords(new_words), 3)
+		tetragrams = ngrams(remove_stopwords(new_words), 4)
+		for t in tetragrams:
+			try:
+				if (t[0] + " " + t[1] + " " + t[2]) in ngrams_count.keys():
+					continue
+				ngrams_count[(t[0] + " " + t[1] + " " + t[2] + " " + t[3])] += 1
+			except:
+				ngrams_count.update({(t[0] + " " + t[1] + " " + t[2] + " " + t[3]): 1})
+		for t in trigrams:
+			try:
+				if (t[0] + " " + t[1]) in ngrams_count.keys():
+					continue
+				ngrams_count[(t[0] + " " + t[1] + " " + t[2])] += 1
+			except:
+				ngrams_count.update({(t[0] + " " + t[1] + " " + t[2]): 1})
+		for b in bigrams:
+			try:
+				ngrams_count[(b[0] + " " + b[1])] += 1
+			except:
+				ngrams_count.update({(b[0] + " " + b[1]): 1})
+
+		
+	ngrams_count = [[ngram, count] for ngram, count in ngrams_count.items()]
+	return sorted(ngrams_count, key=lambda x: x[1], reverse=True)
 
 if __name__ == "__main__":
 
@@ -86,7 +158,7 @@ if __name__ == "__main__":
 		["Y entonces? Colón le dicen ahora a @Miguel_Pizarro https://t.co/anfxz2ntiI", 247],
 		["Parece una foto mas bien https://t.co/4zdvlfCO56", 247],
 		["@FONASA hola buen día. Consulta, mis padres son extranjeros y ya tiene rut pero aun están desempleados, podrían cot… https://t.co/AeRReRr6G6", 247],
-		["@chunachokstillo Tonto, gracias por la info",247],
+		["@chunachokstillo @Miguel_pizarro Tonto, gracias por la info",247],
 		["@chunachokstillo Tonto, gracias por la info #ajajajaj jaja asdasda asdasda asdasda;...",247],
 		["Buenos días, ya sabemos que murió Hawking, no hay necesidad de que todo el mundo lo publique.", 247],
 		["No es alegría, solo que no esperen contemplación con él RT @nelsonbocaranda: RT @felixseijasr: Nadie debe alegrarse… https://t.co/KXx2eRBAQW", 247],
@@ -94,3 +166,5 @@ if __name__ == "__main__":
 	]
 
 	print (get_words_count(tweets))
+
+	print (get_ngrams_count(tweets))
