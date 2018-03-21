@@ -1,6 +1,6 @@
 # Twitter Bubble Chart
 
-Project to create a Bubble Chart using D3JS from a CSV file generated from the Twitter API.
+Project to create Bubble Charts using D3JS from csv files generated from the Twitter API.
 
 ### How to install & Run
 1. Download & Install python 3.6.3: https://www.python.org/downloads/.
